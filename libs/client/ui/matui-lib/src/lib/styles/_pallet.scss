@@ -1,0 +1,33 @@
+@use "utils/color";
+@use "utils/custom-properties";
+
+$base-name: 'ref-palette';
+
+@function make-pallet($name, $base-color){
+
+    $light: lightness($base-color);
+  
+    $white: #fff;
+    $black: #000;
+    $baseDark: color.multiply($base-color, $base-color);
+  
+    @return (
+      custom-properties.create("#{$base-name}-#{$name}0", #000000),
+      custom-properties.create("#{$base-name}-#{$name}10", mix($base-color, $baseDark, 25%)),
+      /*'10': mix($base-color, $baseDark, 25%),
+      '20': mix($base-color, $baseDark, 54%),
+      '25': mix($base-color, $baseDark, 70%),
+      '30': mix($base-color, $baseDark, 87%),
+      '35': mix($base-color, $baseDark, 90%),
+      '40': $base-color,
+      '50': mix($base-color, $white, 100%),
+      '60': mix($base-color, $white, 85%),
+      '70': mix($base-color, $white, 70%),
+      '80': mix($base-color, $white, 50%),
+      '90': mix($base-color, $white, 30%),
+      '95': mix($base-color, $white, 12%),
+      '100': mix($base-color, $white, 0%),
+      */
+    );
+  
+  }

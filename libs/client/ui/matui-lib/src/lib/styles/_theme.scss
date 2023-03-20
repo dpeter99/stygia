@@ -1,48 +1,48 @@
 
-@use "utils/color";
+@use "sass:map";
+@use "sass:list";
 
-@mixin make-var($name, $value){
-  :root{
-    #{$name}: #{$value};
+@use "utils/color";
+@use "utils/custom-properties";
+
+@use "pallet";
+
+
+@function makeTheme($source: #006c4b){
+  $primary: $source;
+  $secondary: #018786 !default;
+
+  $primary-pallet: pallet.make-pallet("primary", $source);
+  $secondary-pallet: pallet.make-pallet("secondary", $secondary);
+
+
+  $theme: list.concat($primary-pallet, $secondary-pallet);
+  
+/*
+  (
+    on-primary: if(contrast-tone($primary) == 'dark', #000, #fff),
+
+    on-secondary: if(contrast-tone($secondary) == 'dark', #000, #fff),
+  ) !global;
+*/
+
+  @return $theme;
+}
+
+@function theme-var($key, $fallback: null) {
+  @if ($fallback) {
+      @return var($key, $fallback);
+  } @else {
+      @return var($key);
   }
 }
 
-@function make-pallet($name, $base-color){
-
-  $light: lightness($base-color);
-
-  $white: #fff;
-  $black: #000;
-  $baseDark: color.multiply($base-color, $base-color);
-
-  @return (
-    '0' : #000000,
-    '10': mix($base-color, $baseDark, 25%),
-    '20': mix($base-color, $baseDark, 54%),
-    '25': mix($base-color, $baseDark, 70%),
-    '30': mix($base-color, $baseDark, 87%),
-    '35': mix($base-color, $baseDark, 90%),
-    '40': $base-color,
-    '50': mix($base-color, $white, 100%),
-    '60': mix($base-color, $white, 85%),
-    '70': mix($base-color, $white, 70%),
-    '80': mix($base-color, $white, 50%),
-    '90': mix($base-color, $white, 30%),
-    '95': mix($base-color, $white, 12%),
-    '100': mix($base-color, $white, 0%),
-  );
-
+$md-sys-color-primary: "--md-sys-color-primary";
+:root{
+  #{$md-sys-color-primary}: theme-var(--md-ref-palette-primary40);
 }
 
 $source: #006c4b !default;
-
-$primary: $source;
-$primary-pallet: make-pallet("primary", $source);
-$on-primary: if(contrast-tone($primary) == 'dark', #000, #fff) !default;
-
-$secondary: #018786 !default;
-$secondary-pallet: make-pallet("secondary", $secondary);
-$on-secondary: if(contrast-tone($secondary) == 'dark', #000, #fff) !default;
 
 $surface: #fff !default;
 $on-surface: if(contrast-tone($surface) == 'dark', #000, #fff) !default;
@@ -51,16 +51,11 @@ $error: #b00020 !default;
 $on-error: if(contrast-tone($error) == 'dark', #000, #fff) !default;
 
 
-@mixin style() {
-
+@mixin style($theme) {
   :root {
-    @each $space, $value in $primary-pallet {
-      --md-ref-palette-primary#{$space}: #{$value};
-    }
-
-    @each $space, $value in $secondary-pallet {
-      --md-ref-palette-secondary#{$space}: #{$value};
+    @each $space, $value in $theme {
+      //--md-ref-palette-primary#{$space}: #{$value};
+      @include custom-properties.declaration($value);
     }
   }
-
 }
