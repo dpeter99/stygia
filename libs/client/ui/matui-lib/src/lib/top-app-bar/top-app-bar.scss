@@ -1,0 +1,11 @@
+@use "../styles/module";
+@use "../styles/elevation";
+
+.container{
+  @include elevation.elevation(10);
+
+  height: 64px;
+  background-color: var(--md-sys-color-surface);
+
+  display: flex;
+}

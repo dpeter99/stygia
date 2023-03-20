@@ -5,6 +5,7 @@
   "scripts": {},
   "private": true,
   "dependencies": {
+    "@iconify/icons-mdi": "^1.2.44",
     "core-js": "^3.6.5",
     "regenerator-runtime": "0.13.7",
     "tslib": "^2.3.0"
@@ -14,7 +15,7 @@
     "@nrwl/cypress": "15.8.6",
     "@nrwl/eslint-plugin-nx": "15.8.6",
     "@nrwl/jest": "15.8.6",
-    "@nrwl/js": "15.8.6",
+    "@nrwl/js": "^15.8.6",
     "@nrwl/linter": "15.8.6",
     "@nrwl/web": "^15.8.6",
     "@nrwl/webpack": "15.8.6",

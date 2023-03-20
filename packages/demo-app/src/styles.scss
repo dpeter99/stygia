@@ -1,5 +1,11 @@
 /* You can add global styles to this file, and also import other style files */
 
+@use "theme" with (
+  $source: #6c316f
+);
+
+@include theme.style();
+
 html,
 body
 {

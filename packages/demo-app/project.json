@@ -22,6 +22,9 @@
         "index": "packages/demo-app/src/index.html",
         "baseHref": "/",
         "styles": ["packages/demo-app/src/styles.scss"],
+        "stylePreprocessorOptions": {
+          "includePaths": ["/libs/client/ui/matui-lib/src/lib/styles"]
+        },
         "scripts": []
       },
       "configurations": {

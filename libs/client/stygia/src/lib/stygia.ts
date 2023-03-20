@@ -1,4 +1,16 @@
+import {hasProp} from "./utils/object.utils";
+
 export type DocType = 'html';
+
+// eslint-disable-next-line @typescript-eslint/no-namespace
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace JSX {
+    interface IntrinsicElements {
+      [elemName: string]: any
+    }
+  }
+}
 
 export abstract class Component {
   protected children: any[] = [];
@@ -124,21 +136,26 @@ export type Props = {
   [key: string]: any;
 };
 
+export type ComponentTypes = Component | string;
+
 export function createElement(
   tag: any,
   props?: Props,
-  ...children: Component[]
+  ...children: ComponentTypes[]
 ): any {
-  let slots = {};
-  if (children.length > 0)
+  const slots = {};
+  if (children.length > 0) {
     children
-      .filter(
-        (i) => !!i && !!Object.keys(i.getProps()).find((i) => i === 'st:slot')
-      )
       .forEach((comp) => {
-        slots[comp.getProps()['st:slot']] = comp;
-        delete comp.getProps()['st:slot'];
+
+        if(!!comp && typeof comp === 'object' && hasProp(comp.getProps(),'st:slot')){
+          slots[comp.getProps()['st:slot']] = comp;
+          delete comp.getProps()['st:slot'];
+        }
+
+        return false;
       });
+  }
 
   props = {
     ...(props ?? {}),

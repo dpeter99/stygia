@@ -7,7 +7,9 @@
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "jsx": "react",
+    "jsxFactory": "Stygia.createElement"
   },
   "files": [],
   "include": [],
