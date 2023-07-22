@@ -284,8 +284,12 @@ $_config: (
 @mixin declaration($custom-prop, $gss: (), $important: false) {
   @if $custom-prop {
     $value: get-fallback($custom-prop, $shallow: true);
+    @if is-custom-prop($value) {
+      $value: create-var($value);
+    }
+
     $property: get-varname($custom-prop);
-    
+
     #{$property}: $value;
   }
 }

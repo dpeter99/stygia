@@ -1,0 +1,74 @@
+{
+  "name": "simple-test",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "packages/simple-test/src",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/packages/simple-test",
+        "compiler": "tsc",
+        "main": "packages/simple-test/src/main.ts",
+        "tsConfig": "packages/simple-test/tsconfig.app.json",
+        "webpackConfig": "packages/simple-test/webpack.config.js",
+        "assets": [
+          "packages/simple-test/src/favicon.ico",
+          "packages/simple-test/src/assets"
+        ],
+        "index": "packages/simple-test/src/index.html",
+        "baseHref": "/",
+        "styles": ["packages/simple-test/src/styles.scss"],
+        "scripts": []
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "outputHashing": "all",
+          "sourceMap": false,
+          "namedChunks": false,
+          "extractLicenses": true,
+          "vendorChunk": false,
+          "fileReplacements": [
+            {
+              "replace": "packages/simple-test/src/environments/environment.ts",
+              "with": "packages/simple-test/src/environments/environment.prod.ts"
+            }
+          ]
+        },
+        "dev": {
+          "optimization": false,
+          "outputHashing": "all",
+          "sourceMap": true,
+          "namedChunks": false,
+          "extractLicenses": true,
+          "vendorChunk": false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/webpack:dev-server",
+      "options": {
+        "buildTarget": "simple-test:build"
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "simple-test:build:production"
+        },
+        "dev": {
+          "buildTarget": "simple-test:build:dev"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/simple-test/**/*.ts"]
+      }
+    }
+  }
+}

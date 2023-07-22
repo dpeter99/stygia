@@ -3,31 +3,38 @@
 
 $base-name: 'ref-palette';
 
+@function palette-name($name, $num){
+  @return '#{$base-name}-#{$name}#{$num}';
+}
+
+@function palette-prop($name, $num, $value: null){
+  @return custom-properties.create("#{palette-name($name, $num)}",  $value);
+}
+
 @function make-pallet($name, $base-color){
 
     $light: lightness($base-color);
-  
+
     $white: #fff;
     $black: #000;
     $baseDark: color.multiply($base-color, $base-color);
-  
+
     @return (
-      custom-properties.create("#{$base-name}-#{$name}0", #000000),
-      custom-properties.create("#{$base-name}-#{$name}10", mix($base-color, $baseDark, 25%)),
-      /*'10': mix($base-color, $baseDark, 25%),
-      '20': mix($base-color, $baseDark, 54%),
-      '25': mix($base-color, $baseDark, 70%),
-      '30': mix($base-color, $baseDark, 87%),
-      '35': mix($base-color, $baseDark, 90%),
-      '40': $base-color,
-      '50': mix($base-color, $white, 100%),
-      '60': mix($base-color, $white, 85%),
-      '70': mix($base-color, $white, 70%),
-      '80': mix($base-color, $white, 50%),
-      '90': mix($base-color, $white, 30%),
-      '95': mix($base-color, $white, 12%),
-      '100': mix($base-color, $white, 0%),
-      */
+      palette-prop($name, 0 ,  $black),
+      palette-prop($name, 10,  mix($base-color, $baseDark, 25%)),
+      palette-prop($name, 20,  mix($base-color, $baseDark, 54%)),
+      palette-prop($name, 25,  mix($base-color, $baseDark, 70%)),
+      palette-prop($name, 30,  mix($base-color, $baseDark, 87%)),
+      palette-prop($name, 35,  mix($base-color, $baseDark, 90%)),
+      palette-prop($name, 40,  mix($base-color, $baseDark, 100%)),
+      palette-prop($name, 50,  mix($base-color, $white, 100%)),
+      palette-prop($name, 60,  mix($base-color, $white, 85%)),
+      palette-prop($name, 70,  mix($base-color, $white, 70%)),
+      palette-prop($name, 80,  mix($base-color, $white, 50%)),
+      palette-prop($name, 90,  mix($base-color, $white, 30%)),
+      palette-prop($name, 95,  mix($base-color, $white, 12%)),
+      palette-prop($name, 99,  mix($base-color, $white, 2%)),
+      palette-prop($name, 100, mix($base-color, $white, 0%)),
     );
-  
+
   }

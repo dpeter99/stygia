@@ -3,28 +3,40 @@
 @use "sass:list";
 
 @use "utils/color";
-@use "utils/custom-properties";
+@use "utils/custom-properties" as prop;
 
 @use "pallet";
 
+@function base-tokens(){
+  @return (
+    prop.create("sys-color-primary", pallet.palette-prop("primary", 40)),
+    prop.create("sys-color-primary-container", pallet.palette-prop("primary", 90)),
 
-@function makeTheme($source: #006c4b){
+    prop.create("sys-color-surface", pallet.palette-prop("neutral", 99)),
+    prop.create("sys-color-surface-tint", prop.create("sys-color-primary")),
+
+
+    //prop.create("sys-color-surface-elevation-0", mix(var(--mdc-sys-color-surface), var(--mdc-sys-color-surface-tint), 5)),
+  );
+}
+
+@function make-theme($source: #006c4b){
+  $theme: ();
+
   $primary: $source;
-  $secondary: #018786 !default;
-
   $primary-pallet: pallet.make-pallet("primary", $source);
+  $theme: list.join($theme, $primary-pallet);
+
+
+  $secondary: adjust-hue($source, 180); //#018786 !default;
   $secondary-pallet: pallet.make-pallet("secondary", $secondary);
+  $theme: list.join($theme, $secondary-pallet);
 
+  $neutral: #5c5f5c; //#018786 !default;
+  $neutral-pallet: pallet.make-pallet("neutral", $neutral);
+  $theme: list.join($theme, $neutral-pallet);
 
-  $theme: list.concat($primary-pallet, $secondary-pallet);
-  
-/*
-  (
-    on-primary: if(contrast-tone($primary) == 'dark', #000, #fff),
-
-    on-secondary: if(contrast-tone($secondary) == 'dark', #000, #fff),
-  ) !global;
-*/
+  $theme: list.join($theme, base-tokens());
 
   @return $theme;
 }
@@ -37,25 +49,11 @@
   }
 }
 
-$md-sys-color-primary: "--md-sys-color-primary";
-:root{
-  #{$md-sys-color-primary}: theme-var(--md-ref-palette-primary40);
-}
-
-$source: #006c4b !default;
-
-$surface: #fff !default;
-$on-surface: if(contrast-tone($surface) == 'dark', #000, #fff) !default;
-
-$error: #b00020 !default;
-$on-error: if(contrast-tone($error) == 'dark', #000, #fff) !default;
-
 
 @mixin style($theme) {
   :root {
-    @each $space, $value in $theme {
-      //--md-ref-palette-primary#{$space}: #{$value};
-      @include custom-properties.declaration($value);
+    @each $value in $theme {
+      @include prop.declaration($value);
     }
   }
 }

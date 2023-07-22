@@ -2,10 +2,11 @@
 @use "../styles/elevation";
 
 .container{
-  @include elevation.elevation(10);
+  --_level: 5;
+  @include elevation.elevation-host();
 
   height: 64px;
-  background-color: var(--md-sys-color-surface);
+  background-color: var(--mdc-sys-color-surface);
 
   display: flex;
 }

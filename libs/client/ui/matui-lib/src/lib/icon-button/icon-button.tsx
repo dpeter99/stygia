@@ -1,14 +1,14 @@
-import { Stygia } from '@stygia/libs/client/stygia';
+import {Component, Stygia} from '@stygia/libs/client/stygia';
 import style from './icon-button.scss';
-import {IconifyIcon} from "../iconify-icon/iconify-icon";
+import {IconifyIcon, IconifyData} from "../iconify-icon/iconify-icon";
 
-export class IconButton extends Stygia.Component{
+export class IconButton extends Component<{icon:IconifyData}>{
 
-  constructor(props: Stygia.Props) {
+  constructor(props: Stygia.TypedProps<{icon:IconifyData}>) {
     super(props);
   }
 
-  render(): Promise<Stygia.Component> {
+  render() {
 
     return (
       <button class={style.button}>

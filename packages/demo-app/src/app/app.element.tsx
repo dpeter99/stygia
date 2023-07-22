@@ -4,6 +4,6 @@ import { AppLayout } from './components/app-layout/app-layout';
 
 export const index = () => (
   <AppLayout>
-    <AppHeader st:slot="header" />
+    <AppHeader st:slot="header" test="asd"/>
   </AppLayout>
 );

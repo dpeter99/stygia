@@ -1,15 +1,18 @@
-import { Stygia } from '@stygia/libs/client/stygia';
+import {Component, Stygia} from '@stygia/libs/client/stygia';
 import style from './iconify-icon.scss';
+import { IconifyIcon as IconifyData } from '@iconify/types';
 
-export class IconifyIcon extends Stygia.Component{
+export {IconifyIcon as  IconifyData} from '@iconify/types';
 
-  constructor(props: Stygia.Props) {
+export class IconifyIcon extends Component<{icon:IconifyData}>{
+
+  constructor(props: Stygia.TypedProps<{icon:IconifyData}>) {
     super(props);
   }
 
-  render(): Promise<Stygia.Component> {
+  render() {
 
-    const viewBox = `${this.props.icon.left ?? 0} ${this.props.icon.right ?? 0} ${this.props.icon.height} ${this.props.icon.width}`;
+    const viewBox = `${this.props.icon.left ?? 0} 0 ${this.props.icon.height} ${this.props.icon.width}`;
 
     return <svg viewBox={viewBox} class={style["svg-icon"]}>
         {this.props.icon.body}
