@@ -1,6 +1,9 @@
-import { test } from "./test";
-import printTree from "print-tree";
-import { Stygia, VirtualNode } from "./stygia/jsx-runtime";
+import { test } from './test';
+import printTree from 'print-tree';
+import { Stygia, VirtualNode } from './stygia/jsx-runtime';
+import { Logger, LogLevel } from './stygia/logger';
+
+Logger.setLevel(LogLevel.ERROR);
 
 function printNodeTree(element: VirtualNode) {
   printTree(
@@ -18,26 +21,9 @@ function updateName(e:InputEvent) {
 
 function reRender(p:string) {
   const tree = test(p, updateName);
-  printNodeTree(tree);
+  //printNodeTree(tree);
   Stygia.render(tree, container)
 }
 
 reRender("hello")
-
-
-
-
-const testinput = document.getElementById("test")
-
-function delay(time) {
-  return new Promise(resolve => setTimeout(resolve, time));
-}
-
-testinput.addEventListener("input", async (e)=>{
-  // @ts-ignore
-  let val = e.target.value;
-  await delay(1000);
-  // @ts-ignore
-  testinput.value = val
-})
 

@@ -1,61 +1,99 @@
 //import printTree from "print-tree";
+import { Logger } from "./logger"
+import { unique } from "webpack-merge";
 
-export abstract class Component{
+export abstract class BaseComponent {
   private isComponent = true;
-
+  protected props: Props;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  constructor(props: Props) {}
+  constructor(props: Props) {
+    this.props = props;
+    Logger.error('Constructing: ', this);
+  }
 
   abstract render();
+
+  setProps(props: Props) {
+    this.props = props;
+  }
 }
-Component.prototype["isComponent"] = true;
+BaseComponent.prototype["isComponent"] = true;
 
 type Props = {[i: string]: unknown}
 
-type ComponentTypes = string | ((prop:Props)=>VirtualNode) | (new (props:Props) => Component);
+const propMarker: unique symbol = Symbol();
+type Prop<T> = T & { [propMarker]: true };
 
-export type VirtualNode = {
-  type: string;
-  props: Props;
-  children: VirtualNode[];
-  _owner?: Component;
+type UnProp<TProp> = TProp extends Prop<infer T> ? T : TProp;
+
+export function P<T>(value: T): Prop<T> {
+  const prop = Object.defineProperty((value as Prop<T>),propMarker, {});
+  return prop;
 }
 
-function shouldConstruct(tag: Exclude<ComponentTypes, string>): tag is (new (props:Props) => Component) {
-  // console.log(`Tag: ${tag.name} has "isComponent": ${Object.getPrototypeOf(tag).isComponent}`)
+type ComponentProps<TComp> = PickProps<TComp>;
+type RawComponentProps<TComp> = RawProps<PickProps<TComp>>;
+type PickByType<T, Value> = {
+  [P in keyof T as T[P] extends Value | undefined ? P : never]: T[P]
+}
+type PickProps<T> =
+  PickByType<T, Prop<string>>
+& PickByType<T, Prop<object>>
+
+type RawProps<TProps> = {
+  [P in keyof TProps]: UnProp<TProps[P]>
+}
+
+abstract class Component<TSelf> extends BaseComponent{
+  protected props: RawComponentProps<TSelf>;
+  constructor(props:RawComponentProps<TSelf>) {
+    super(props as Props);
+    Object.keys(this.props).forEach((k)=>this[k] = P(this.props[k]));
+  }
+
+}
+
+export class TestComponent extends Component<TestComponent>{
+  public user: Prop<string>;
+  public test: Prop<{ name:string, age: number }>
+  render(){
+    return Stygia.createElement('p',{}, this.props.user);
+  }
+}
+
+
+
+
+
+type ComponentTypes = string | ((prop:Props)=>VirtualNode) | (new (props:Props) => BaseComponent);
+
+export type VirtualNode = {
+  type: ComponentTypes;
+  props: Props;
+  children: VirtualNode[];
+  _owner?: BaseComponent;
+}
+
+function shouldConstruct(tag: Exclude<ComponentTypes, string>): tag is (new (props:Props) => BaseComponent) {
+  Logger.info(`Tag: ${tag.name} has "isComponent": ${Object.getPrototypeOf(tag).isComponent}`)
   return tag.prototype.isComponent ?? false;
 }
 function createElement(
   tag: ComponentTypes,
   props?: Props,
   ...children: (VirtualNode | string)[]
-): VirtualNode{
-
+): VirtualNode {
   const childNodes = children.map((child) => {
-    return typeof child === 'object' ? child : createTextElement(child);
+    return typeof child === 'object' && 'type' in child
+      ? child
+      : createTextElement(child);
   });
 
-  let virtualTag: VirtualNode = {
-    type: "asd",
+  return {
+    type: tag,
     props: props ?? {},
     children: childNodes ?? [],
   };
-
-  if(typeof tag === 'function'){
-    if(shouldConstruct(tag)){
-      virtualTag._owner = new tag(props);
-      virtualTag.children = [virtualTag._owner.render()];
-    }
-    else{
-      virtualTag = tag(props);
-    }
-  }
-  else if(typeof tag === 'string'){
-    virtualTag.type = tag;
-  }
-
-  return virtualTag
-
 }
 
 function createTextElement(text:string): VirtualNode {
@@ -109,8 +147,10 @@ let deletions = null
 
 function render(element:VirtualNode, container: HTMLElement) {
   wipRoot = {
-    ...element,
+    type: "root",
+    props: {},
     dom: container,
+    children: [element],
     alternate: currentRoot,
     effectTag: "UPDATE",
   }
@@ -137,8 +177,12 @@ function workLoop(deadline) {
 requestIdleCallback(workLoop)
 
 function performUnitOfWork(fiber: Fiber): Fiber {
-  if(!fiber.dom){
-    fiber.dom = createDom(fiber);
+  const isFunctionComponent =
+    fiber.type instanceof Function
+  if (isFunctionComponent) {
+    updateFunctionComponent(fiber)
+  } else {
+    updateHostComponent(fiber)
   }
 
   const elements = fiber.children ?? [];
@@ -155,6 +199,32 @@ function performUnitOfWork(fiber: Fiber): Fiber {
     }
     nextFiber = nextFiber.parent
   }
+}
+
+
+function updateFunctionComponent(fiber:Fiber) {
+  if(!(fiber.type instanceof Function))
+    return;
+
+  if(shouldConstruct(fiber.type)){
+    if(!fiber._owner)
+      fiber._owner = new fiber.type(fiber.props);
+
+    fiber._owner.setProps(fiber.props);
+
+    fiber.children = [fiber._owner.render()];
+  }
+  else{
+    fiber.children = [fiber.type(fiber.props)];
+  }
+
+}
+
+function updateHostComponent(fiber: Fiber) {
+  if (!fiber.dom) {
+    fiber.dom = createDom(fiber)
+  }
+  reconcileChildren(fiber, fiber.children)
 }
 
 /**
@@ -174,7 +244,7 @@ function reconcileChildren(wipFiber: Fiber, elements: VirtualNode[]) {
 
     if (sameType) {
       newFiber = {
-        type: oldFiber.type,
+        ...oldFiber,
         props: element.props,
         children: element.children,
         dom: oldFiber.dom,
@@ -245,7 +315,7 @@ function remakeChildren(wipFiber: Fiber) {
 
 function commitRoot(){
   deletions.forEach(commitWork)
-  console.log(printFiberTree(1, wipRoot));
+  Logger.info(printFiberTree(1, wipRoot));
   commitWork(wipRoot.child)
   currentRoot = wipRoot;
   wipRoot = null
@@ -255,7 +325,12 @@ function commitWork(fiber) {
   if (!fiber) {
     return
   }
-  const domParent = fiber.parent.dom
+
+  let domParentFiber = fiber.parent
+  while (!domParentFiber.dom) {
+    domParentFiber = domParentFiber.parent
+  }
+  const domParent = domParentFiber.dom
 
   if (
     fiber.effectTag === "PLACEMENT" &&
@@ -263,12 +338,12 @@ function commitWork(fiber) {
   ) {
     domParent.appendChild(fiber.dom)
   } else if (fiber.effectTag === "DELETION") {
-    domParent.removeChild(fiber.dom)
+    commitDeletion(fiber, domParent)
   } else if (
     fiber.effectTag === "UPDATE" &&
     fiber.dom != null
   ) {
-    console.log(`Updating`, fiber.dom, "old props:", fiber.alternate.props, "new props:", fiber.props);
+    Logger.info(`Updating`, fiber.dom, "old props:", fiber.alternate.props, "new props:", fiber.props);
     updateDom(
       fiber.dom,
       fiber.alternate.props,
@@ -276,71 +351,61 @@ function commitWork(fiber) {
     )
   }
 
-  domParent.appendChild(fiber.dom)
   commitWork(fiber.child)
   commitWork(fiber.sibling)
 }
 
+function commitDeletion(fiber, domParent) {
+  if (fiber.dom) {
+    domParent.removeChild(fiber.dom)
+  } else {
+    commitDeletion(fiber.child, domParent)
+  }
+}
 
-const isEvent = key => key.startsWith("on")
-const isProperty = key =>
-  key !== "children" && !isEvent(key)
-const isNew = (prev, next) => key => prev[key] !== next[key]
-const isGone = (prev, next) => key => !(key in next)
 
-function updateDom(dom: HTMLElement, prevProps, nextProps) {
-
+const isEvent = (key) => key.startsWith("on");
+const isProperty = (key) => key !== "children" && !isEvent(key);
+const isNew = (prev, next) => (key) => prev[key] !== next[key];
+const isGone = (prev, next) => (key) => !(key in next);
+function updateDom(dom, prevProps, nextProps) {
   //Remove old or changed event listeners
   Object.keys(prevProps)
     .filter(isEvent)
-    .filter(
-      key =>
-        !(key in nextProps) ||
-        isNew(prevProps, nextProps)(key)
-    )
-    .forEach(name => {
-      const eventType = name
-        .toLowerCase()
-        .substring(2)
-      console.log(`Removing event listener: ${eventType}`)
-      dom.removeEventListener(
-        eventType,
-        prevProps[name]
-      )
-    })
+    .filter((key) => !(key in nextProps) || isNew(prevProps, nextProps)(key))
+    .forEach((name) => {
+      const eventType = name.toLowerCase().substring(2);
+      Logger.info(`Removing event listener: ${eventType}`);
+      dom.removeEventListener(eventType, prevProps[name]);
+    });
 
   // Remove old properties
   Object.keys(prevProps)
     .filter(isProperty)
     .filter(isGone(prevProps, nextProps))
-    .forEach(name => {
-      console.log(`Removing property: ${name}`)
-      dom[name] = ""
-    })
+    .forEach((name) => {
+      Logger.info(`Removing property: ${name}`);
+      dom[name] = "";
+    });
 
   // Set new or changed properties
   Object.keys(nextProps)
     .filter(isProperty)
     .filter(isNew(prevProps, nextProps))
-    .forEach(name => {
-      console.log(`Adding property: ${name}`)
-      dom[name] = nextProps[name]
-    })
+    .forEach((name) => {
+      Logger.info(`Adding property: ${name}`);
+      dom[name] = nextProps[name];
+    });
 
   // Add event listeners
   Object.keys(nextProps)
     .filter(isEvent)
     .filter(isNew(prevProps, nextProps))
-    .forEach(name => {
-      const eventType = name
-        .toLowerCase()
-        .substring(2)
-      console.log(`Adding event listener: ${eventType}`)
-      dom.addEventListener(
-        eventType,
-        nextProps[name]
-      )
-    })
+    .forEach((name) => {
+      const eventType = name.toLowerCase().substring(2);
+      Logger.info(`Adding event listener: ${eventType}`);
+      dom.addEventListener(eventType, nextProps[name]);
+    });
 }
 
 
@@ -350,17 +415,16 @@ function createDom(element:VirtualNode){
     dom = document.createTextNode(<string>element.props.nodeValue)
   }
   else{
-    const htmlElement = createDomElement(element);
-    updateDom(htmlElement,{},element.props);
-
-    dom = htmlElement
+    dom = createDomElement(element);
   }
+
+  updateDom(dom,{},element.props);
 
   return dom;
 }
 
 function createDomElement(element: VirtualNode) {
-  const dom = document.createElement(element.type);
+  const dom = document.createElement(element.type.toString());
 
   const isProperty = (key) => key !== 'children';
   Object.keys(element.props ?? {})

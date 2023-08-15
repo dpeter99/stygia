@@ -4,7 +4,8 @@
     "outDir": "../../dist/out-tsc",
     "types": ["node"],
     "jsx": "react",
-    "jsxFactory": "Stygia.createElement"
+    "jsxFactory": "Stygia.createElement",
+    "experimentalDecorators": true
   },
   "exclude": ["jest.config.ts", "src/**/*.spec.ts", "src/**/*.test.ts"],
   "include": ["src/**/*.ts", "src/**/*.tsx"]
